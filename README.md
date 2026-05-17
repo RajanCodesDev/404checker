@@ -1,4 +1,3 @@
-````md
 # Post-Deployment 404 & Link Validation Crawler
 
 A post-deployment website validation tool built with:
@@ -328,6 +327,4 @@ It is designed as an internal operational validation tool for developers, DevOps
 
 MIT
 
-```
-Open-source SEO crawler with Playwright + Crawlee for detecting hard/soft 404s, broken internal links, and full-site crawl analysis using PostgreSQL + Fastify.
-```
+
