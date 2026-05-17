@@ -1,0 +1,7 @@
+{
+  "watch": ["src"],
+  "ignore": [
+    "runtime_storage/*",
+    "node_modules/*"
+  ]
+}

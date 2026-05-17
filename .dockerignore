@@ -1,0 +1,4 @@
+node_modules
+runtime_storage
+.git
+.env

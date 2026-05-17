@@ -1,0 +1,74 @@
+# docker-compose.yml
+
+version: '3.9'
+
+services:
+
+postgres:
+
+```
+image: postgres:16
+
+container_name: crawler-postgres
+
+restart: unless-stopped
+
+environment:
+  POSTGRES_USER: crawler_user
+  POSTGRES_PASSWORD: crawler_pass
+  POSTGRES_DB: crawler
+
+ports:
+  - "5432:5432"
+
+volumes:
+  - postgres_data:/var/lib/postgresql/data
+  - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+healthcheck:
+  test: ["CMD-SHELL", "pg_isready -U crawler_user"]
+  interval: 5s
+  timeout: 5s
+  retries: 10
+```
+
+crawler-app:
+
+```
+build: .
+
+container_name: crawler-app
+
+restart: unless-stopped
+
+depends_on:
+  postgres:
+    condition: service_healthy
+
+environment:
+  DB_HOST: postgres
+  DB_USER: crawler_user
+  DB_PASSWORD: crawler_pass
+  DB_NAME: crawler
+  DB_PORT: 5432
+
+ports:
+  - "3000:3000"
+  - "8080:8080"
+
+volumes:
+  - .:/app
+  - /app/node_modules
+
+command: >
+  bash -c "
+  node src/api/server.js &
+  cd dashboard &&
+  python3 -m http.server 8080 &
+  cd /app &&
+  node src/index.js
+  "
+```
+
+volumes:
+postgres_data:

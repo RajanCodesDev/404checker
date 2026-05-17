@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Crawler Dashboard</title>
+
+    <style>
+        a {
+            color: white;
+        }
+
+        a:hover {
+            color: #00d26a;
+        }
+
+        body {
+            font-family: Arial;
+            background: #111;
+            color: #eee;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #333;
+            padding: 10px;
+            text-align: left;
+
+            word-break: break-word;
+
+            max-width: 420px;
+        }
+
+        tr:nth-child(even) {
+            background: #1a1a1a;
+        }
+
+        .hard404 {
+            color: red;
+            font-weight: bold;
+        }
+
+        .soft404 {
+            color: orange;
+            font-weight: bold;
+        }
+
+        .ok {
+            color: #00d26a;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .card {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
+            min-width: 180px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Crawler Dashboard</h1>
+
+    <div class="stats">
+
+        <div class="card">
+            <h3>Total URLs</h3>
+            <div id="total">0</div>
+        </div>
+
+        <div class="card">
+            <h3>Hard 404</h3>
+            <div id="hard404">0</div>
+        </div>
+
+        <div class="card">
+            <h3>Soft 404</h3>
+            <div id="soft404">0</div>
+        </div>
+
+        <div class="card">
+            <h3>Latest Site</h3>
+            <div id="siteUrl">-</div>
+        </div>
+
+    </div>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>Status</th>
+                <th>URL</th>
+                <th>Title</th>
+                <th>Flags</th>
+            </tr>
+        </thead>
+
+        <tbody id="results"></tbody>
+
+    </table>
+
+
+
+    <h2>Broken Link References</h2>
+
+    <table>
+
+        <thead>
+
+            <tr>
+                <th>Broken URL</th>
+                <th>Affected Pages</th>
+                <th>Status</th>
+            </tr>
+
+        </thead>
+
+        <tbody id="brokenLinks"></tbody>
+
+    </table>
+
+    <script>
+
+        function shortenUrl(url) {
+
+            try {
+
+                const parsed =
+                    new URL(url);
+
+                return parsed.pathname || '/';
+
+            } catch {
+
+                return url;
+
+            }
+
+        }
+
+        async function loadStats() {
+
+            const response = await fetch(
+                'http://localhost:3000/latest-session'
+            );
+
+            const data = await response.json();
+
+            document.getElementById('total')
+                .innerText =
+                data.total_urls || 0;
+
+            document.getElementById('hard404')
+                .innerText =
+                data.hard404_count || 0;
+
+            document.getElementById('soft404')
+                .innerText =
+                data.soft404_count || 0;
+
+            document.getElementById('siteUrl')
+                .innerText =
+                data.site_url || '-';
+
+        }
+
+        async function loadBrokenLinks() {
+
+            const response = await fetch(
+                'http://localhost:3000/broken-links'
+            );
+
+            const rows = await response.json();
+
+            const tbody =
+                document.getElementById(
+                    'brokenLinks'
+                );
+
+            tbody.innerHTML = '';
+
+            rows.forEach(row => {
+
+                const tr =
+                    document.createElement('tr');
+
+                tr.innerHTML = `
+
+            <td>
+                <a href="${row.target_url}"
+                   target="_blank">
+
+                    ${shortenUrl(
+                    row.target_url
+                )}
+
+                </a>
+            </td>
+
+            <td>
+                ${row.affected_pages}
+            </td>
+
+            <td class="hard404">
+                ${row.status}
+            </td>
+
+        `;
+
+                tbody.appendChild(tr);
+
+            });
+
+        }
+
+
+
+        async function loadResults() {
+
+            const response = await fetch(
+                'http://localhost:3000/results'
+            );
+
+            const rows = await response.json();
+
+            const tbody = document.getElementById(
+                'results'
+            );
+
+            tbody.innerHTML = '';
+
+            rows.forEach(row => {
+
+                const tr = document.createElement('tr');
+
+                let flags = 'OK';
+                let className = 'ok';
+
+                if (row.hard404) {
+                    flags = 'HARD 404';
+                    className = 'hard404';
+                }
+
+                if (row.soft404) {
+                    flags = 'SOFT 404';
+                    className = 'soft404';
+                }
+
+                tr.innerHTML = `
+                <tr>
+
+                    <td class="${className}">
+                        ${row.status}
+                    </td>
+
+                    <td>
+                        <a href="${row.url}" target="_blank">
+
+                            ${shortenUrl(row.url)}
+
+                        </a>
+                    </td>
+
+                    <td>${row.title || ''}</td>
+
+                    <td class="${className}">
+                        ${flags}
+                    </td>
+
+                </tr>
+            `;
+
+                tbody.appendChild(tr);
+
+            });
+
+        }
+
+        loadStats();
+
+        loadResults();
+
+        loadBrokenLinks();
+
+    </script>
+
+</body>
+
+</html>
